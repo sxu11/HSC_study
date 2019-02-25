@@ -19,67 +19,60 @@ if is_test_mode:
     L_s = [24.]
     r2_s = [1.]
 else:
-    #L_s = np.linspace(16,18.5,num=6).tolist() + np.linspace(19,28,num=46).tolist() \
-    #     + np.linspace(28.5,32,num=8).tolist()
 
-    L_s = np.linspace(19,28,num=91).tolist()
-    #np.linspace(19,21.5,num=6).tolist() + np.linspace(22,25,num=31).tolist() + \
-        #np.linspace(25.5,28,num=6).tolist()
-    #Ass_EGFP_s = [1,10,100]
-    #print (L_s)
-    r2_s = np.linspace(0.1,6.,num=60).tolist()
-    #np.linspace(0.1,1.,num=10).tolist() + np.linspace(1.5,6,num=10).tolist()
+    L_s = np.linspace(19, 28, num=10).tolist()  # num=91
+    r2_s = np.linspace(0.1, 6., num=6).tolist()  # num=60
 
-    #Ls_len = len(L_s)
-    #L_s = L_s[curr_py_ID*2-2:curr_py_ID*2] + \
-    #      L_s[Ls_len-(curr_py_ID*2):Ls_len-(curr_py_ID*2-1)+1]
+res_folderpath = 'simulated_clones/'
 
-Tt, dt = 70 * 30 + 1, 1. # dt is in /day
+if __name__ == '__main__':
 
-omg = 1/6.2 # Ref: Dancey1967
+    Tt, dt = 70 * 30 + 1, 1. # dt is in /day
 
-res_folderpath = 'data_file/'
-if not os.path.exists(res_folderpath):
-    os.mkdir(res_folderpath)
+    omg = 1/6.2 # Ref: Dancey1967
 
-for L in L_s:
-    for r2 in r2_s:
-        res_filepath = res_folderpath + '[r2,L]='+"[%.1f,%.1f]"%(r2,L)
-        if os.path.isfile(res_filepath):
-            print res_filepath + ' has been processed!'
-            continue
 
-        A = rs.get_A(L=L,
-                     mu3=mu3,
-                     Mss_EGFP=Mss_EGFP)
-        print res_filepath, 'A:', A
-        gi_s = np.mean(samples_expr, axis=1)
+    if not os.path.exists(res_folderpath):
+        os.mkdir(res_folderpath)
 
-        Tb= max((L/r2 + 1/omg + 1/mu3)*2., 80)
+    for L in L_s:
+        for r2 in r2_s:
+            res_filepath = res_folderpath + '[r2,L]='+"[%.1f,%.1f]"%(r2,L)
+            if os.path.isfile(res_filepath):
+                print res_filepath + ' has been processed!'
+                continue
 
-        # do a simulation
-        HSC_diffs = rs.get_HSC_diffs(
-            A=A,
-            gi_s=gi_s,
-            Tt=Tt)
+            A = rs.get_A(L=L,
+                         mu3=mu3,
+                         Mss_EGFP=Mss_EGFP)
+            print res_filepath, 'A:', A
+            gi_s = np.mean(samples_expr, axis=1)
 
-        clone_num = len(gi_s)
+            Tb= max((L/r2 + 1/omg + 1/mu3)*2., 80)
 
-        # 2.Pre-calculate burst on r2, mu3, and dt, Tb
-        m_burst = rs.get_m_burst(r2=r2,
-                              L=L,
-                              mu3=mu3,
-                              omg=omg,
-                              dt=dt,
-                              Tb=Tb)
+            # do a simulation
+            HSC_diffs = rs.get_HSC_diffs(
+                A=A,
+                gi_s=gi_s,
+                Tt=Tt)
 
-        mi_s = rs.get_mi_s(events=HSC_diffs,
-                        m_burst=m_burst,
-                        clone_num=clone_num,
-                        Tt=Tt,
-                        dt=dt)
+            clone_num = len(gi_s)
 
-        # save the sample matrix
+            # 2.Pre-calculate burst on r2, mu3, and dt, Tb
+            m_burst = rs.get_m_burst(r2=r2,
+                                  L=L,
+                                  mu3=mu3,
+                                  omg=omg,
+                                  dt=dt,
+                                  Tb=Tb)
 
-        mi_s = mi_s[mi_s.sum(axis=1) > 0, :]
-        np.savetxt(res_filepath, mi_s, fmt="%.0f")
+            mi_s = rs.get_mi_s(events=HSC_diffs,
+                            m_burst=m_burst,
+                            clone_num=clone_num,
+                            Tt=Tt,
+                            dt=dt)
+
+            # save the sample matrix
+
+            mi_s = mi_s[mi_s.sum(axis=1) > 0, :]
+            np.savetxt(res_filepath, mi_s, fmt="%.0f")
